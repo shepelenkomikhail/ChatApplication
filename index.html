@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Socket.IO chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <h1 class="text-3xl font-bold text-center mt-5 text-gray-200">
+        Chat App
+    </h1>
+</head>
+
+<body class="bg-[#242424]">
+    <div class="grid grid-col-8 w-2/3">
+        <ul id="messages" class="list-none text-gray-200 col-start-2"></ul>
+    </div>
+    <form id="form" action="" class="flex justify-center">
+        <div class="flex flex-col gap-4 m-6 items-center fixed bottom-0 w-2/3">
+            <input id="input" autocomplete="off" class="border rounded-xl w-2/3 h-12 bg-gray-200 p-4" />
+            <button class="border outline-none rounded-xl w-32 bg-gray-200" type="submit">Send</button>
+            <button id="toggle-btn" class="border outline-none rounded-xl w-32 bg-gray-200">Disconnect</button>
+        </div>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let counter = 0;
+
+        const socket = io({
+            auth: {
+                serverOffset: 0
+            },
+            // enable retries
+            ackTimeout: 10000,
+            retries: 3,
+        });
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const message = document.getElementById('messages');
+        const toggleButton = document.getElementById('toggle-btn');
+
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value) {
+                const clientOffset = `${socket.id}-${counter++}`;
+                socket.emit('chat message', input.value, clientOffset);
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', (msg, serverOffset) => {
+            const item = document.createElement('li');
+            item.textContent = msg;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+            socket.auth.serverOffset = serverOffset;
+        });
+
+        toggleButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (socket.connected) {
+                toggleButton.innerText = 'Connect';
+                socket.disconnect();
+            } else {
+                toggleButton.innerText = 'Disconnect';
+                socket.connect();
+            }
+        });
+    </script>
+</body>
+
+</html>
