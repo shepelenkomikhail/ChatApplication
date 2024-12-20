@@ -5,69 +5,47 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Socket.IO chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <h1 class="text-3xl font-bold text-center mt-5 text-gray-200">
-        Chat App
-    </h1>
 </head>
 
 <body class="bg-[#242424]">
-    <div class="grid grid-col-8 w-2/3">
-        <ul id="messages" class="list-none text-gray-200 col-start-2"></ul>
+    <svg xmlns="http://www.w3.org/2000/svg" id="delete" class="fixed right-0 mt-4 mx-6 hover:scale-105 cursor-pointer"
+        height="48px" viewBox="0 -960 960 960" width="48px" fill="#E5E7EB">
+        <path
+            d="M261-120q-24.75 0-42.37-17.63Q201-155.25 201-180v-570h-41v-60h188v-30h264v30h188v60h-41v570q0 24-18 42t-42 18H261Zm438-630H261v570h438v-570ZM367-266h60v-399h-60v399Zm166 0h60v-399h-60v399ZM261-750v570-570Z" />
+    </svg>
+    <div class="flex flex-row justify-center items-center">
+        <h1 class="text-3xl font-bold text-center mt-5 text-gray-200">
+            Incognito chat
+        </h1>
+        <svg xmlns="http://www.w3.org/2000/svg" class="mt-5 ml-3" height="32px" viewBox="0 -960 960 960" width="32px"
+            fill="#E5E7EB">
+            <path
+                d="M480-392q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q141 0 257.5 76T912-520h-91q-52-93-143-146.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280q20 0 40-2t40-6v81q-20 3-40 5t-40 2Zm0-120q22 0 42.5-5t38.5-14q5-50 31.5-90t67.5-64v-7q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm-5-180Zm205 380q-17 0-28.5-11.5T640-160v-120q0-17 11.5-28.5T680-320v-40q0-33 23.5-56.5T760-440q33 0 56.5 23.5T840-360v40q17 0 28.5 11.5T880-280v120q0 17-11.5 28.5T840-120H680Zm40-200h80v-40q0-17-11.5-28.5T760-400q-17 0-28.5 11.5T720-360v40Z" />
+        </svg>
     </div>
-    <form id="form" action="" class="flex justify-center">
-        <div class="flex flex-col gap-4 m-6 items-center fixed bottom-0 w-2/3">
-            <input id="input" autocomplete="off" class="border rounded-xl w-2/3 h-12 bg-gray-200 p-4" />
-            <button class="border outline-none rounded-xl w-32 bg-gray-200" type="submit">Send</button>
-            <button id="toggle-btn" class="border outline-none rounded-xl w-32 bg-gray-200">Disconnect</button>
-        </div>
-    </form>
+    <div class="flex flex-col mb-8 items-center justify-center fixed bottom-0 w-full">
+        <ul id="messages"
+            class="list-none text-gray-200 h-[calc(100vh-150px)] overflow-y-auto w-full md:w-2/3 pb-20 px-6"></ul>
+
+        <form id="form" action="" class="flex justify-center items-center w-full">
+            <div class="flex relative items-center w-full md:w-2/3 mx-1 md:mx-6">
+                <input id="input" autocomplete="off"
+                    class="border w-full mx-6 rounded-xl h-12 bg-gray-200 p-4 outline-none" placeholder="Message.." />
+
+                <button class="absolute right-0 mr-8 ml-2 hover:scale-105" type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="32px" viewBox="0 -960 960 960" width="32px"
+                        fill="#000000">
+                        <path
+                            d="M120-160v-640l760 320-760 320Zm80-120 474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z" />
+                    </svg>
+                </button>
+
+            </div>
+        </form>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        let counter = 0;
-
-        const socket = io({
-            auth: {
-                serverOffset: 0
-            },
-            // enable retries
-            ackTimeout: 10000,
-            retries: 3,
-        });
-        const form = document.getElementById('form');
-        const input = document.getElementById('input');
-        const message = document.getElementById('messages');
-        const toggleButton = document.getElementById('toggle-btn');
-
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (input.value) {
-                const clientOffset = `${socket.id}-${counter++}`;
-                socket.emit('chat message', input.value, clientOffset);
-                input.value = '';
-            }
-        });
-
-        socket.on('chat message', (msg, serverOffset) => {
-            const item = document.createElement('li');
-            item.textContent = msg;
-            messages.appendChild(item);
-            window.scrollTo(0, document.body.scrollHeight);
-            socket.auth.serverOffset = serverOffset;
-        });
-
-        toggleButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (socket.connected) {
-                toggleButton.innerText = 'Connect';
-                socket.disconnect();
-            } else {
-                toggleButton.innerText = 'Disconnect';
-                socket.connect();
-            }
-        });
-    </script>
+    <script src="client.js"></script>
 </body>
 
 </html>
