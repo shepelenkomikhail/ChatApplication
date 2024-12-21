@@ -1,7 +1,5 @@
 const form = document.getElementById('form');
 const input = document.getElementById('input');
-const message = document.getElementById('messages');
-const deleteVar = document.getElementById('delete');
 
 const socket = io({
     auth: { serverOffset: 0 },
@@ -11,56 +9,56 @@ const socket = io({
 
 let counter = 0;
 
-form.addEventListener('submit', (e) => {
+function submitForm(e) {
     e.preventDefault();
     if (input.value) {
         const clientOffset = `${socket.id}-${counter++}`;
         socket.emit('chat message', input.value, clientOffset);
         input.value = '';
     }
-});
+    input.style.height = '64px';
+}
+
+form.addEventListener('submit', (e) => {submitForm(e);});
 
 function deleteRequest() {
     fetch(`/`, {
         method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
     })
         .then(response => {
             if (response.ok) {
                 console.log('Message deleted successfully');
                 location.reload(true);
-            } else {
-                console.error('Failed to delete message');
-            }
+            } else {console.error('Failed to delete message');}
         })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        .catch(error => {console.error('Error:', error);});
 }
 
-deleteVar.addEventListener('click', () => {
-    deleteRequest();
+window.addEventListener('beforeunload', (event) => {deleteRequest();});
+
+input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {submitForm(e);}
 });
 
-window.addEventListener('beforeunload', (event) => {
-    deleteRequest();
+input.addEventListener('input', function () {
+    if (this.value.length < 50) {
+        this.style.height = '64px';
+    } else {
+        this.style.height = 'auto';
+        this.style.height = `${this.scrollHeight}px`;
+    }
 });
-
 
 socket.on('chat message', (msg, serverOffset, senderId) => {
     const item = document.createElement('li');
     item.textContent = msg;
 
     if (senderId === socket.id) {
-        item.className = "p-3 m-2 rounded-xl bg-[rgb(48,48,48)] text-right ml-auto w-fit";
+        item.className = "p-3 m-2 rounded-xl bg-[rgb(48,48,48)] text-left ml-auto w-fit max-w-[60%] break-words";
     } else {
-        item.className = "p-3 m-2 rounded-xl bg-[rgb(48,48,48)] text-left mr-auto w-fit";
+        item.className = "p-3 m-2 rounded-xl bg-[rgb(48,48,48)] text-left mr-auto w-fit max-w-[60%] break-words";
     }
-
-    messages.appendChild(item);
-    messages.scrollTop = messages.scrollHeight;
 
     socket.auth.serverOffset = serverOffset;
 });
