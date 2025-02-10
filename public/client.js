@@ -1,9 +1,14 @@
+import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+
 const form = document.getElementById('form');
 const input = document.getElementById('input');
+const messagesList = document.getElementById('messages');
+const deleteButton = document.getElementById('delete');
 
-const socket = io({
+const socket = io("http://localhost:3000", {
+    transports: ["websocket"], // ✅ Forces WebSockets to avoid polling issues
     auth: { serverOffset: 0 },
-    ackTimeout: 10000,
+    ackTimeout: 20000,
     retries: 3,
 });
 
@@ -13,32 +18,55 @@ function submitForm(e) {
     e.preventDefault();
     if (input.value) {
         const clientOffset = `${socket.id}-${counter++}`;
-        socket.emit('chat message', input.value, clientOffset);
+        console.log(input.value, clientOffset);
+
+        socket.emit('chat message', input.value, clientOffset, (response) => {
+            console.log(input.value, clientOffset);
+            console.log('Message sent callback:', response);
+
+            if (response) {
+                if (response.success) {
+                    console.log("✅ Message confirmed by server:", response.message);
+                } else {
+                    console.error("❌ Server error:", response.message);
+                }
+            } else {
+                console.error("❌ Message was not acknowledged (null response). Possible server issue.");
+            }
+        });
+
+
         input.value = '';
     }
     input.style.height = '64px';
 }
 
-form.addEventListener('submit', (e) => {submitForm(e);});
+form.addEventListener('submit', (e) => { submitForm(e); });
 
 function deleteRequest() {
-    fetch(`/`, {
+    fetch("http://localhost:3000/", {
         method: 'DELETE',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
     })
         .then(response => {
             if (response.ok) {
-                console.log('Message deleted successfully');
-                location.reload(true);
-            } else {console.error('Failed to delete message');}
+                console.log('Messages deleted successfully');
+                messagesList.innerHTML = '';
+            } else {
+                console.error('Failed to delete messages');
+            }
         })
-        .catch(error => {console.error('Error:', error);});
+        .catch(error => { console.error('Error:', error); });
 }
 
-window.addEventListener('beforeunload', (event) => {deleteRequest();});
+deleteButton.addEventListener('click', () => {
+    deleteRequest();
+});
+
+window.addEventListener('beforeunload', (event) => { deleteRequest(); });
 
 input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !e.shiftKey) {submitForm(e);}
+    if (e.key === 'Enter' && !e.shiftKey) { submitForm(e); }
 });
 
 input.addEventListener('input', function () {
@@ -60,5 +88,10 @@ socket.on('chat message', (msg, serverOffset, senderId) => {
         item.className = "p-3 m-2 rounded-xl bg-[rgb(48,48,48)] text-left mr-auto w-fit max-w-[60%] break-words";
     }
 
+    messagesList.appendChild(item);
+
     socket.auth.serverOffset = serverOffset;
+    socket.disconnect();
+    socket.connect();
 });
+
